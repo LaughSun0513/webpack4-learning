@@ -164,10 +164,11 @@ devServer:{
         port:3000, //修改端口
         progress:true,//
         contentBase:'./build', //将当前目录作为静态服务的目录，否则会去内存里
-        compress:true //开启压缩
+        compress:true, //开启压缩
+        open:true //自动打开页面
 }
 ```
-运行`npm run dev` 
+运行`npm run dev`
 
 ## 插件
 
@@ -223,4 +224,203 @@ output:{
 ```
 
 -----------------------2019.4.19 以上------------------
+## module -- 放loader
 
+### 处理样式
+#### style-loader ---> 将样式添加到head标签
+#### css-loader ---> 支持 @import 写法
+#### less less-loader ---> 解析less 语法
+```
+  "devDependencies": {
+    "css-loader": "^2.1.1",
+    "html-webpack-plugin": "^3.2.0",
+    "less": "^3.9.0",
+    "less-loader": "^5.0.0",
+    "style-loader": "^0.23.1",
+    "webpack": "^4.30.0",
+    "webpack-cli": "^3.3.0",
+    "webpack-dev-server": "^3.3.1"
+  }
+```
+```
+module:{
+    rules:[
+        {
+            test:/\.css$/,
+            //-----字符串:针对单个loader------
+            //use:'style-loader'  
+            //-----数组: 多个loader ------
+            //use:['style-loader','css-loader']
+            //-----数组: 多个loader 对象 可添加 options配置------
+            use:[        
+                {
+                    loader:'style-loader',
+                    options:{
+                        /*
+                          正常情况下 样式文件会加载在js里 并动态添加到最后的style标签内,如果html内部有style 标签，style标签内的相同属性就会被js样式覆盖，所以要调整优先级，让style 标签内样式优先
+                        */
+                        insertAt:'top'  
+                    }
+                },
+                'css-loader'
+            ]
+        },
+        {
+            test:/\.less$/,
+            use:['style-loader','css-loader','less-loader']
+        }
+    ]
+}
+```
+#### plugin -- mini-css-extract-plugin 抽离css
+`yarn add mini-css-extract-plugin -D`
+
+```
+let MiniCssExtractPlugin = require('mini-css-extract-plugin')
+
+plugins: [
+    new MiniCssExtractPlugin({
+        filename: 'main.css'  ->抽离的css文件名 也就是将src里的css打包的时候单独合并成一个css，如果要抽离less 再写一个MiniCssExtractPlugin 更换filename文件名即可
+    })
+]
+
+{
+    test: /\.css$/,   // css 处理
+    // use: 'css-loader'
+    // use: ['style-loader', 'css-loader'],
+    use: [
+        // {
+        //     loader: 'style-loader',
+        //     options: {
+        //         insertAt: 'top' // 将css标签插入最顶头  这样可以自定义style不被覆盖
+        //     }
+        // },
+        MiniCssExtractPlugin.loader,   // 抽离
+        'css-loader', // css-loader 用来解析@import这种语法,
+    ]
+}
+```
+
+#### postcss-loader autoprefixer 给css加-webkit-之类的前缀 兼容不同浏览器
+`yarn add postcss-loader autoprefixer -D`
+```js
+{
+    loader: "postcss-loader",
+    options: {
+        ident: "postcss",
+        plugins: [
+            require("autoprefixer")(),
+        ],
+    },
+},
+```
+```json
+// package.json
+"browserslist": [
+    "defaults",
+    "not ie < 8",
+    "last 2 versions",
+    "> 1%",
+    "iOS >= 8",
+    "Firefox >= 20",
+    "Android > 4.4",
+    "last 3 iOS versions"
+]
+```
+```css
+/* main.css */
+body {
+    background:red;
+    -webkit-transform: rotate(45deg) translate(150px,93px);
+            transform: rotate(45deg) translate(150px,93px);
+}
+```
+
+## optimization -- 压缩 css 和 压缩 js
+- optimize-css-assets-webpack-plugin 压缩css
+- uglifyjs-webpack-plugin 压缩js 但是没法处理ES6，不好使
+- terser-webpack-plugin  替换成这个plugin 可以支持ES6语法
+`yarn add optimize-css-assets-webpack-plugin terser-webpack-plugin`
+```js
+const OptimizeCssAssetsPlugin = require("optimize-css-assets-webpack-plugin");
+const TerserJsPlugin = require("terser-webpack-plugin");
+
+optimization:{
+    minimizer:[
+        new OptimizeCssAssetsPlugin(),
+        // new UglifyJsPlugin(), ERROR in bundle.js from UglifyJs Unexpected token: keyword «const»
+        new TerserJsPlugin()
+    ]
+},
+```
+
+## babel相关
+### ES6 --> ES65
+- yarn add @babel/core @babel/preset-env babel-loader -D 
+
+```
+{
+    test:/\.js$/,
+    use: {
+        loader: 'babel-loader',
+        options: {
+            presets: ['@babel/preset-env']
+        }
+    }
+}
+```
+
+### 支持装饰器语法 + ES7 class
+- yarn add @babel/plugin-proposal-decorators @babel/plugin-proposal-class-properties -D 
+
+```
+{
+    test:/\.js$/,
+    use: {
+        loader: 'babel-loader',
+        options: {
+            presets: ['@babel/preset-env'],
+            plugins: [
+                ["@babel/plugin-proposal-decorators", { "legacy": true }],
+                ["@babel/plugin-proposal-class-properties", { "loose" : true }],
+            ]
+        }
+    }
+}
+```
+
+### 支持generate语法
+- yarn add @babel/plugin-transform-runtime @babel/runtime -D
+```
+{
+    test:/\.js$/,
+    use: {
+        loader: 'babel-loader',
+        options: {
+            presets: ['@babel/preset-env'],
+            plugins: [
+                ["@babel/plugin-proposal-decorators", { "legacy": true }],
+                ["@babel/plugin-proposal-class-properties", { "loose" : true }],
+                ["@babel/plugin-transform-runtime"]
+            ]
+        }
+    },
+    include: path.join(__dirname,'src'), // 处理src里的文件
+    exclude: /node_modules/ // 排除node_modules
+}
+```
+
+## eslint 检查代码格式
+- yarn add eslint eslint-loader -D
+```
+{
+    test:/\.js$/,
+    use: {
+        loader: 'eslint-loader',
+        options: {
+            enforce: 'pre' // 因为loader自下而上执行 如果想让该模块写在上面并先执行 可以使用该属性 后执行'post'
+        }
+    },
+    exclude: /node_modules/
+},
+```
