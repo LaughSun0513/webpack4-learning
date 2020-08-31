@@ -17,8 +17,8 @@
     - [处理样式的loader](#module--放loader)
         - [style-loader 将样式添加到head标签](#style-loader将样式添加到head标签)
         - [css-loader 支持@import写法](#css-loader支持@import写法)
-        - [less less-loader 解析less语法](#less&&less-loader解析less语法)
-        - [postcss-loader + autoprefixer 加css前缀兼容不同浏览器](#postcss-loader&&autoprefixer)
+        - [less less-loader 解析less语法](#less-loader解析less语法)
+        - [postcss-loader + autoprefixer 加css前缀兼容不同浏览器](#postcss-loader)
 
     - [图片相关](#图片相关)
         - [js引入图片](#在JS中使用图片)
@@ -269,7 +269,7 @@ output:{
 ### 处理样式
 #### style-loader将样式添加到head标签
 #### css-loader支持@import写法
-#### less&&less-loader解析less语法
+#### less-loader解析less语法
 ```
   "devDependencies": {
     "css-loader": "^2.1.1",
@@ -341,8 +341,8 @@ plugins: [
 }
 ```
 
-#### postcss-loader&&autoprefixer
-##### 给css加-webkit-之类的前缀兼容不同浏览器
+#### postcss-loader
+##### autoprefixer 给css加-webkit-之类的前缀兼容不同浏览器
 `yarn add postcss-loader autoprefixer -D`
 ```js
 {
