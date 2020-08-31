@@ -1,8 +1,9 @@
 @import './1.less';
 body {
     background:red;
-    transform: rotate(45deg) translate(150px,93px);
 }
 #app {
     background: green;
+    transform: rotate(5deg) translate(150px,93px);
+    background: url('./1.png');
 }

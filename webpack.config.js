@@ -1,10 +1,11 @@
 const path = require("path");
+const webpack = require('webpack');
 const { CleanWebpackPlugin } = require("clean-webpack-plugin");
 const HtmlWebpackPlugin = require("html-webpack-plugin");
-const MiniCssExtractPlugin = require("mini-css-extract-plugin");
-const OptimizeCssAssetsPlugin = require("optimize-css-assets-webpack-plugin");
-const UglifyJsPlugin = require("uglifyjs-webpack-plugin");
-const TerserJsPlugin = require("terser-webpack-plugin");
+const MiniCssExtractPlugin = require("mini-css-extract-plugin"); // 打包的时候 单独打出css文件
+const OptimizeCssAssetsPlugin = require("optimize-css-assets-webpack-plugin"); // 压缩css
+const TerserJsPlugin = require("terser-webpack-plugin"); // 压缩js 支持ES6
+
 
 module.exports = {
 	mode: "production", //默认两种模式 production development
@@ -12,6 +13,7 @@ module.exports = {
 	output: {
 		filename: "bundle.js", //打包后的文件名 带6位hash
 		path: path.resolve(__dirname, "build"), //路径必须是一个绝对路径
+		// publicPath: 'http://www.baidu.com'
 	},
 	devServer: {
 		port: 3000, //修改端口
@@ -33,20 +35,47 @@ module.exports = {
 			hash: true, //会在打包后的bundle.js和添加hash值 例如bundle.js?30c2c0f02493fdc2a499
 		}),
 		new MiniCssExtractPlugin({
-			filename: "main.css",
+			filename: "css/main.css",
 		}),
+		new webpack.ProvidePlugin({
+			$: 'jquery'
+		})
 	],
-	optimization:{
-		minimizer:[
+	optimization: {
+		minimizer: [
 			new OptimizeCssAssetsPlugin(),
-			// new UglifyJsPlugin(), ERROR in bundle.js from UglifyJs Unexpected token: keyword «const»
 			// new TerserJsPlugin()
 		]
 	},
 	module: {
 		rules: [
 			{
-				test:/\.js$/,
+				test: /\.html$/,
+				use: 'html-withimg-loader'
+			},
+			// {
+			// 	test: /\.(png|jpg|gif|svg)$/,
+			// 	use: {
+			// 		loader:'file-loader',
+			// 		options:{
+			// 			esModule:false
+			// 		}
+			// 	}
+			// },
+			{
+				test: /\.(png|jpg|gif|svg)$/,
+				use: {
+					loader: 'url-loader',
+					options: {
+						limit: 1,
+						esModule: false,
+						outputPath: '/img/',
+						publicPath: 'http://www.baidu.com'
+					}
+				}
+			},
+			{
+				test: /\.js$/,
 				use: {
 					loader: 'eslint-loader',
 					options: {
@@ -57,14 +86,7 @@ module.exports = {
 			},
 			{
 				test: /\.css$/,
-				//use:['style-loader','css-loader']
 				use: [
-					// {
-					//     loader:'style-loader',
-					//     options:{
-					//         insertAt:'top'
-					//     }
-					// },
 					MiniCssExtractPlugin.loader,
 					{
 						loader: "css-loader",
@@ -88,21 +110,22 @@ module.exports = {
 				use: ["style-loader", "css-loader", "postcss-loader", "less-loader"],
 			},
 			{
-				test:/\.js$/,
+				test: /\.js$/,
 				use: {
 					loader: 'babel-loader',
 					options: {
 						presets: ['@babel/preset-env'],
 						plugins: [
 							["@babel/plugin-proposal-decorators", { "legacy": true }],
-							["@babel/plugin-proposal-class-properties", { "loose" : true }],
+							["@babel/plugin-proposal-class-properties", { "loose": true }],
 							["@babel/plugin-transform-runtime"]
 						]
 					}
 				},
-				include: path.join(__dirname,'src'),
+				include: path.join(__dirname, 'src'),
 				exclude: /node_modules/
 			}
+
 		],
 	},
 };
