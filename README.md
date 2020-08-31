@@ -6,17 +6,20 @@
 - [打包方式的三种配置方式](#打包方式的三种配置方式)
 - [webpack-dev-server在本地启动一个静态服务](#webpack-dev-server在本地启动一个静态服务)
 - [output输出文件可以添加hash值](#output输出文件可以添加hash值)
+
 - [插件](#插件)
-    - [html-webpack-plugin 自动生成html文件并引入js文件](#html-webpack-plugin自动生成html文件并引入打包的bundle.js文件)
+    - [html-webpack-plugin 自动生成html文件并引入js文件](#html-webpack-plugin)
     - [mini-css-extract-plugin 抽离css到单独css文件](#plugin--mini-css-extract-plugin抽离css)
     - [optimize-css-assets-webpack-plugin 压缩css](#optimize-css-assets-webpack-plugin压缩css)
-    - [terser-webpack-plugin 压缩js](#terser-webpack-plugin压缩js,替换成uglifyjs可以支持ES6语法)
+    - [terser-webpack-plugin 压缩js](#terser-webpack-plugin压缩js)
+
 - [loader](#module--放loader)
     - [处理样式的loader](#module--放loader)
-        - [style-loader 将样式添加到head标签](#style-loader--->将样式添加到head标签)
-        - [css-loader 支持@import写法](#css-loader--->支持@import写法)
-        - [less less-loader 解析less语法](#less&&less-loader--->解析less语法)
-        - [postcss-loader + autoprefixer 加css前缀兼容不同浏览器](#postcss-loader&&autoprefixer给css加-webkit-之类的前缀兼容不同浏览器)
+        - [style-loader 将样式添加到head标签](#style-loader将样式添加到head标签)
+        - [css-loader 支持@import写法](#css-loader支持@import写法)
+        - [less less-loader 解析less语法](#less&&less-loader解析less语法)
+        - [postcss-loader + autoprefixer 加css前缀兼容不同浏览器](#postcss-loader&&autoprefixer)
+
     - [图片相关](#图片相关)
         - [js引入图片](#在JS中使用图片)
             - [file-loader](#file-loader)
@@ -27,9 +30,11 @@
            
     - [babel相关](#babel相关)
         - [支持ES6转ES5](#ES6转ES5)
-        - [支持装饰器语法 ES7](#支持装饰器语法，ES7的class私有属性语法)
+        - [支持装饰器语法 ES7](#支持ES7)
         - [支持generate语法](#支持generate语法)
+
     - [eslint 检查代码格式](#eslint检查代码格式)
+
 - [全局变量引入问题 往window上挂变量的三种方式](#全局变量引入问题--往window上挂变量)
 
  
@@ -206,7 +211,8 @@ devServer:{
 
 ## 插件
 
-### html-webpack-plugin自动生成html文件并引入打包的bundle.js文件
+### html-webpack-plugin
+#### 自动生成html文件并引入打包的bundle.js文件
 `yarn add html-webpack-plguin -D`
 
 ```
@@ -261,9 +267,9 @@ output:{
 ## module--放loader
 
 ### 处理样式
-#### style-loader--->将样式添加到head标签
-#### css-loader--->支持@import写法
-#### less&&less-loader--->解析less语法
+#### style-loader将样式添加到head标签
+#### css-loader支持@import写法
+#### less&&less-loader解析less语法
 ```
   "devDependencies": {
     "css-loader": "^2.1.1",
@@ -335,7 +341,8 @@ plugins: [
 }
 ```
 
-#### postcss-loader&&autoprefixer给css加-webkit-之类的前缀兼容不同浏览器
+#### postcss-loader&&autoprefixer
+##### 给css加-webkit-之类的前缀兼容不同浏览器
 `yarn add postcss-loader autoprefixer -D`
 ```js
 {
@@ -373,7 +380,7 @@ body {
 ## optimization -- 压缩 css 和 压缩 js
 ### optimize-css-assets-webpack-plugin压缩css
 ### uglifyjs-webpack-plugin压缩js,但是没法处理ES6,不好使
-### terser-webpack-plugin压缩js,替换成uglifyjs可以支持ES6语法
+### terser-webpack-plugin压缩js
 `yarn add optimize-css-assets-webpack-plugin terser-webpack-plugin`
 ```js
 const OptimizeCssAssetsPlugin = require("optimize-css-assets-webpack-plugin");
@@ -383,7 +390,7 @@ optimization:{
     minimizer:[
         new OptimizeCssAssetsPlugin(),
         // new UglifyJsPlugin(), ERROR in bundle.js from UglifyJs Unexpected token: keyword «const»
-        new TerserJsPlugin()
+        new TerserJsPlugin() // 替换成uglifyjs可以支持ES6语法
     ]
 },
 ```
@@ -404,7 +411,8 @@ optimization:{
 }
 ```
 
-### 支持装饰器语法，ES7的class私有属性语法
+### 支持ES7
+#### 装饰器语法 ES7的class私有属性语法
 - yarn add @babel/plugin-proposal-decorators @babel/plugin-proposal-class-properties -D
 
 ```
