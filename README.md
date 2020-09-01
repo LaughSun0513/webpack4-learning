@@ -4,14 +4,23 @@
 - [webpack打包出来的内容的分析](#webpack打包出来的内容的分析)
 - [手动配置webpack](#手动配置webpack)
 - [打包方式的三种配置方式](#打包方式的三种配置方式)
-- [webpack-dev-server在本地启动一个静态服务](#webpack-dev-server在本地启动一个静态服务)
+- [webpack-dev-server](#webpack-dev-server)
+    - [在本地启动一个静态服务并自动打开页面](#在本地启动一个静态服务并自动打开页面)
+    - [解决跨域问题](#解决跨域问题)
+    - [接口转发功能 比如前端请求/api/user-->请求后端真实接口/user](#接口转发功能)
+    - [本地mock数据](#本地mock数据)
+    - [服务端使用webpack](#服务端使用webpack)
 - [output输出文件可以添加hash值](#output输出文件可以添加hash值)
 
 - [插件](#插件)
     - [html-webpack-plugin 自动生成html文件并引入js文件](#html-webpack-plugin)
+        - [多entry入口js](#多entry入口js)
     - [mini-css-extract-plugin 抽离css到单独css文件](#plugin--mini-css-extract-plugin抽离css)
     - [optimize-css-assets-webpack-plugin 压缩css](#optimize-css-assets-webpack-plugin压缩css)
     - [terser-webpack-plugin 压缩js](#terser-webpack-plugin压缩js)
+    - [clean-webpack-plugin 打包的时候每次清一下打包目录](#clean-webpack-plugin)
+    - [copy-webpack-plugin 复制文件夹到打包文件里](#copy-webpack-plugin)
+    - [webpack.BannerPlugin 在打包出来的js前面添加一段话](#webpack.BannerPlugin)
 
 - [loader](#module--放loader)
     - [处理样式的loader](#module--放loader)
@@ -36,6 +45,8 @@
     - [eslint 检查代码格式](#eslint检查代码格式)
 
 - [全局变量引入问题 往window上挂变量的三种方式](#全局变量引入问题--往window上挂变量)
+- [devtool 可以看线上代码问题](#devtool)
+- [watch 实时打包编译](#watch)
 
  
 
@@ -189,8 +200,8 @@ module.exports={
 运行`npm run build -- --config webpack.config.my.js`   // 添加 -- 参数
 
 ------------------------------------
-## webpack-dev-server在本地启动一个静态服务
-
+## webpack-dev-server
+### 在本地启动一个静态服务并自动打开页面
 `yarn add webpack-dev-server -D`
 
 ```
@@ -209,13 +220,133 @@ devServer:{
 ```
 运行`npm run dev`
 
+### 解决跨域问题
+```js
+// server.js
+const app = require('express')();
+
+// 接口1 localhost:3333/api/user
+app.get('/api/user',(req,res)=>{
+    res.json({
+        txt: 'hello webpack-dev-server proxy localhost:3333/api/user'
+    })
+});
+
+app.listen(3333,()=>{
+    console.log('server listening on 3333')
+})
+```
+`webpack-dev-server` 端口 `3332` , http://localhost:3332/api/user 访问 http://localhost:3333/api/user 端口跨域
+```js
+devServer: {
+        port: 3332, 
+		progress: true,
+		contentBase: "./dist", 
+		compress: true,
+        open: true,
+        proxy: {
+            '/api': 'http://localhost:3333/' // 通过代理 监听到/api都转发到http://localhost:3333/
+        }
+},
+```
+### 接口转发功能
+```js
+ajax.get('/proxy/interface/user',(res)=>{
+    
+});
+```
+```js
+// http://localhost:3332/proxy/interface/user --> http://localhost:3333/user
+devServer: {
+		port: 3332, //修改端口
+		progress: true,
+		contentBase: "./dist", //将当前目录作为静态服务的目录，否则会去内存里
+		compress: true, //开启压缩
+		open: true,
+		proxy: {
+			'/proxy': {
+			    target: 'http://localhost:3333/',
+			    pathRewrite: {
+			        '/proxy/interface': '' // /proxy/interface/user 删掉前面的/proxy/interface 直接访问 /user
+			    }
+			},
+		},
+	},
+```
+### 本地mock数据
+```js
+ajax.get('/mock/user',(res)=>{
+    
+});
+```
+```js
+// 通过before来调用devServer内置的express服务
+devServer: {
+    port: 3332, //修改端口
+    progress: true,
+    contentBase: "./dist", //将当前目录作为静态服务的目录，否则会去内存里
+    compress: true, //开启压缩
+    open: true,
+    proxy: {
+        // '/api': 'http://localhost:3333/',
+        // '/proxy': {
+        //     target: 'http://localhost:3333/',
+        //     pathRewrite: {
+        //         '/proxy/interface': ''
+        //     }
+        // },
+    },
+    before: (app) => {
+        app.get("/mock/user", (req, res) => {
+            res.json({
+                txt: "hello webpack-dev-server proxy before-hooks to mock data",
+            });
+        });
+    },
+},
+```
+### 服务端使用webpack
+```js
+// webpack-dev-middleware
+const config = require('./webpack.config.js');
+const webpack = require('webpack');
+const webpackDevMiddleware = require('webpack-dev-middleware');
+
+const compiler = webpack(config);
+app.use(webpackDevMiddleware(compiler));
+```
+
 ## 插件
+### clean-webpack-plugin
+```js
+const { CleanWebpackPlugin } = require("clean-webpack-plugin");
+{
+    plugins: [
+        new CleanWebpackPlugin()
+    ]
+}
+```
+### webpack.BannerPlugin
+```js
+const webpack = require('webpack');
+
+{
+    plugins: [
+        new webpack.BannerPlugin('make by 2020.8.31')
+    ]
+}
+```
+
+### copy-webpack-plugin
+```js
+
+```
 
 ### html-webpack-plugin
 #### 自动生成html文件并引入打包的bundle.js文件
 `yarn add html-webpack-plguin -D`
 
-```
+```js
 const path = require('path');
 const HtmlWebpackPlugin = require('html-webpack-plugin');
 
@@ -243,6 +374,33 @@ module.exports={
             hash:true //会在打包后的bundle.js和添加hash值 例如bundle.js?30c2c0f02493fdc2a499
 
         })
+    ]
+}
+```
+#### 多entry入口js
+##### 相同的html可以产出对应的js并引入 -- chunks属性
+```js
+module.exports = {
+    mode: 'development',
+    entry: {
+        page1: './src/page1.js',
+        page2: './src/page2.js'
+    },
+    output: {
+        filename: '[name].js',
+        path: path.join(__dirname, 'dist')
+    },
+    plugins: [
+        new HtmlWebpackPlugin({
+            template: './index.html',
+            filename: 'page1.html',
+            chunks: ['page1']
+        }),
+        new HtmlWebpackPlugin({
+            template: './index.html',
+            filename: 'page2.html',
+            chunks: ['page2']
+        }),
     ]
 }
 ```
@@ -593,4 +751,25 @@ output: {
     }
   }
 },
+```
+
+## devtool
+```txt
+devtool: 'source-map'              源码映射 会单独生成一个sourcemap文件 代码出错 会显示报错的行和列 大而全
+devtool: 'eval-source-map'         不会产生单独的sourcemap文件，但是可以显示行和列
+devtool: 'cheap-module-source-map' 不会产生列，打包的时候会单独产生一个map文件 可以单独保存起来
+devtool: 'cheap-module-eval-source-map' 只能看到报错是第几行 不会单独产生一个map文件 集成在打包后的文件里
+```
+
+## watch
+```js
+{
+    watch:true, 
+    watchOptions: {
+        poll: 1000,// 每毫秒问1000次是否需要更新
+        aggregateTimeout: 500 // 防抖 写完代码文件后 500ms才开始打包
+        ignored: /node_modules/ // 不需要监控
+    }
+}
+
 ```

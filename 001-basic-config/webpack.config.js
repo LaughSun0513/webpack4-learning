@@ -5,7 +5,7 @@ const HtmlWebpackPlugin = require("html-webpack-plugin");
 const MiniCssExtractPlugin = require("mini-css-extract-plugin"); // 打包的时候 单独打出css文件
 const OptimizeCssAssetsPlugin = require("optimize-css-assets-webpack-plugin"); // 压缩css
 const TerserJsPlugin = require("terser-webpack-plugin"); // 压缩js 支持ES6
-
+const CopyPlugin = require('copy-webpack-plugin'); // 拷贝文件夹到打包文件下
 
 module.exports = {
 	mode: "production", //默认两种模式 production development
@@ -17,14 +17,21 @@ module.exports = {
 	},
 	devServer: {
 		port: 3000, //修改端口
-		progress: true, //
+		progress: true,
 		contentBase: "./build", //将当前目录作为静态服务的目录，否则会去内存里
 		compress: true, //开启压缩
 		open: true,
 	},
+	watch: false,
+	watchOptions: {
+		poll: 1000,
+		aggregateTimeout: 100,
+		ignored: /node_modules/
+	},
 	plugins: [
 		//数组，放着所有的webpack插件
 		new CleanWebpackPlugin(),
+		new webpack.BannerPlugin('make by 2020.8.31'),
 		new HtmlWebpackPlugin({
 			template: "./src/index.html",
 			filename: "index.html",
@@ -39,12 +46,17 @@ module.exports = {
 		}),
 		new webpack.ProvidePlugin({
 			$: 'jquery'
+		}),
+		new CopyPlugin({
+			patterns: [
+			  { from: 'copyDir', to: './' },
+			],
 		})
 	],
 	optimization: {
 		minimizer: [
 			new OptimizeCssAssetsPlugin(),
-			// new TerserJsPlugin()
+			new TerserJsPlugin()
 		]
 	},
 	module: {

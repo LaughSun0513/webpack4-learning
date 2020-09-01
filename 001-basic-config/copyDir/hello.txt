@@ -1,0 +1,6 @@
+copy-webpack-plugin
+我是要被复制到build下的文件
+我是要被复制到build下的文件
+我是要被复制到build下的文件
+我是要被复制到build下的文件
+我是要被复制到build下的文件
