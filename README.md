@@ -36,7 +36,7 @@
             - [html-withimg-loader](#html-withimg-loader)
         - [css引入图片](#在css中background引入图片)
             - [url-loader](#url-loader)
-           
+
     - [babel相关](#babel相关)
         - [支持ES6转ES5](#ES6转ES5)
         - [支持装饰器语法 ES7](#支持ES7)
@@ -47,8 +47,11 @@
 - [全局变量引入问题 往window上挂变量的三种方式](#全局变量引入问题--往window上挂变量)
 - [devtool 可以看线上代码问题](#devtool)
 - [watch 实时打包编译](#watch)
-
- 
+- [resolve属性](#resolve属性)
+  - [resolve.modules 寻找模块的路径](#resolve.modules)
+  - [resolve.alias 重命名包名](#resolve.alias)
+  - [resolve.mainFields 寻找package.json字段](#resolve.mainFields)
+  - [resolve.extensions 寻找文件类型](#resolve.extensions)
 
 ## webpack安装
  yarn add  webpack webpack-cli -D
@@ -239,9 +242,9 @@ app.listen(3333,()=>{
 `webpack-dev-server` 端口 `3332` , http://localhost:3332/api/user 访问 http://localhost:3333/api/user 端口跨域
 ```js
 devServer: {
-        port: 3332, 
+        port: 3332,
 		progress: true,
-		contentBase: "./dist", 
+		contentBase: "./dist",
 		compress: true,
         open: true,
         proxy: {
@@ -252,7 +255,7 @@ devServer: {
 ### 接口转发功能
 ```js
 ajax.get('/proxy/interface/user',(res)=>{
-    
+
 });
 ```
 ```js
@@ -276,7 +279,7 @@ devServer: {
 ### 本地mock数据
 ```js
 ajax.get('/mock/user',(res)=>{
-    
+
 });
 ```
 ```js
@@ -764,7 +767,7 @@ devtool: 'cheap-module-eval-source-map' 只能看到报错是第几行 不会单
 ## watch
 ```js
 {
-    watch:true, 
+    watch:true,
     watchOptions: {
         poll: 1000,// 每毫秒问1000次是否需要更新
         aggregateTimeout: 500 // 防抖 写完代码文件后 500ms才开始打包
@@ -772,4 +775,48 @@ devtool: 'cheap-module-eval-source-map' 只能看到报错是第几行 不会单
     }
 }
 
+```
+
+## resolve属性
+### resolve.modules
+```js
+// 告诉 webpack解析模块时应该搜索的目录
+resolve: {
+  modules: [path.resolve(__dirname, "src"), "node_modules"], // 先从src中找模块 否则从node_modules中找
+}
+```
+### resolve.alias
+```js
+resolve: {
+  modules: [path.resolve(__dirname, "src"), "node_modules"],
+  alias: {
+  	bootstrap: 'bootstrap/dist/css/bootstrap.css' // 重命名
+  }
+}
+
+// 使用的时候 import 'bootstrap'; --> 实际引用 import 'bootstrap/dist/css/bootstrap.css'
+```
+### resolve.mainFields
+```js
+// 此选项将决定在 package.json 中使用哪个字段导入模块
+resolve: {
+  modules: [path.resolve(__dirname, "src"), "node_modules"],
+  mainFields: ['style', 'main'] // 先找package.json中的style 再找main字段
+}
+
+// 例如bootstrap的package.json中的字段 读取的目录
+"style": "dist/css/bootstrap.css",
+"sass": "scss/bootstrap.scss",
+"main": "dist/js/bootstrap.js",
+```
+### resolve.extensions
+```js
+// 解析文件的顺序
+resolve: {
+  modules: [path.resolve(__dirname, "src"), "node_modules"], // 先从src中找模块 否则从node_modules中找
+  extensions: ['.js', '.css', '.json']
+}
+
+// 这里 extensions 其实是 extensions.css 会先找extensions.js 没有就extensions.css
+import 'extensions';
 ```

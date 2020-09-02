@@ -1,6 +1,6 @@
 @import './1.less';
 body {
-    background:red;
+    background:white;
 }
 #app {
     background: green;

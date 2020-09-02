@@ -49,7 +49,7 @@ module.exports = {
 		}),
 		new CopyPlugin({
 			patterns: [
-			  { from: 'copyDir', to: './' },
+				{ from: 'copyDir', to: './' },
 			],
 		})
 	],
@@ -140,4 +140,12 @@ module.exports = {
 
 		],
 	},
+	resolve: {
+		modules: [path.resolve(__dirname, "src"), "node_modules"], // 先从src中找模块 否则从node_modules中找
+		// alias: {
+		// 	bootstrap: 'bootstrap/dist/css/bootstrap.css'
+		// }
+		mainFields: ['style', 'main'],
+		extensions: ['.js', '.css', '.json']
+	}
 };

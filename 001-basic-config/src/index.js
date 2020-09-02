@@ -2,7 +2,10 @@ require("./index.css");
 // import $ from "jquery";
 // require("expose-loader?$!jquery");
 import "@babel/polyfill";
-import {createImgByJS} from './img';
+import { createImgByJS } from './img';
+// import 'bootstrap/dist/css/bootstrap.css';
+import 'bootstrap';
+import 'extensions';
 
 const fn = () => {
 	const str = "hello webpack!!!";
