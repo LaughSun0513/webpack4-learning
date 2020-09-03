@@ -46,3 +46,9 @@ console.log($);
 
 
 createImgByJS();
+
+// webpack.DefinePlugin
+console.log(DEV)
+console.log(FLAG)
+console.log(ADD)
+console.log(SHOWADD)

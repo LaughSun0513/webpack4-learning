@@ -51,7 +51,13 @@ module.exports = {
 			patterns: [
 				{ from: 'copyDir', to: './' },
 			],
-		})
+		}),
+		new webpack.DefinePlugin({
+            DEV: JSON.stringify('prodution'),
+            FLAG: true,
+            ADD: '1+1',
+            SHOWADD: JSON.stringify('1+1')
+        })
 	],
 	optimization: {
 		minimizer: [
@@ -81,8 +87,8 @@ module.exports = {
 					options: {
 						limit: 1,
 						esModule: false,
-						outputPath: '/img/',
-						publicPath: 'http://www.baidu.com'
+						// outputPath: '/img/',
+						// publicPath: 'http://www.baidu.com'
 					}
 				}
 			},

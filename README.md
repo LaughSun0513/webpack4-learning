@@ -4,6 +4,7 @@
 - [webpack打包出来的内容的分析](#webpack打包出来的内容的分析)
 - [手动配置webpack](#手动配置webpack)
 - [打包方式的三种配置方式](#打包方式的三种配置方式)
+
 - [webpack-dev-server](#webpack-dev-server)
     - [在本地启动一个静态服务并自动打开页面](#在本地启动一个静态服务并自动打开页面)
     - [解决跨域问题](#解决跨域问题)
@@ -21,7 +22,8 @@
     - [clean-webpack-plugin 打包的时候每次清一下打包目录](#clean-webpack-plugin)
     - [copy-webpack-plugin 复制文件夹到打包文件里](#copy-webpack-plugin)
     - [webpack.BannerPlugin 在打包出来的js前面添加一段话](#webpack.BannerPlugin)
-
+    - [webpack.DefinePlugin 在打包出来的js前面添加一段话](#webpack.DefinePlugin)
+    - [webpack-merge 区分打包环境](#区分打包环境)
 - [loader](#module--放loader)
     - [处理样式的loader](#module--放loader)
         - [style-loader 将样式添加到head标签](#style-loader将样式添加到head标签)
@@ -52,6 +54,7 @@
   - [resolve.alias 重命名包名](#resolve.alias)
   - [resolve.mainFields 寻找package.json字段](#resolve.mainFields)
   - [resolve.extensions 寻找文件类型](#resolve.extensions)
+
 
 ## webpack安装
  yarn add  webpack webpack-cli -D
@@ -336,6 +339,25 @@ const webpack = require('webpack');
 {
     plugins: [
         new webpack.BannerPlugin('make by 2020.8.31')
+    ]
+}
+
+// 在打包完的代码里会加上
+/*! make by 2020.8.31 */
+```
+### webpack.DefinePlugin
+```js
+// 可以往源代码里面注入变量 比如环境变量
+const webpack = require('webpack');
+
+{
+    plugins: [
+        new webpack.DefinePlugin({
+            DEV: JSON.stringify('prodution'), // prodution
+            FLAG: true, // true
+            ADD: '1+1', // 2
+            SHOWADD: JSON.stringify('1+1') // 1+1
+        })
     ]
 }
 ```
@@ -820,3 +842,25 @@ resolve: {
 // 这里 extensions 其实是 extensions.css 会先找extensions.js 没有就extensions.css
 import 'extensions';
 ```
+
+
+## 区分打包环境
+- webpack-merge     插件
+- webpack.common.js 公共打包配置
+- webpack.dev.js    本地打包配置
+- webpack.prod.js   上线打包配置
+
+## 优化webpack
+### module.noParse 
+- 不解析某个库里的依赖库 如不去解析jquery里的依赖库
+### module.rules.exclude / module.rules.include
+### webpack.ignorePlugin 
+- ignore大包 + 手动引入小包 如引入moment时，不解析语言包 手动引入moment/locale/zh-cn
+### dllPlugin
+### happyPack
+### webpack自带tree-shaking / scope hosting
+- production模式 自带tree-shaking 会将没用的代码删掉，不打包进bundle.js
+- scope hosting 会优化代码，将没用啰嗦的变量合并结果
+### optimization.splitChunks 提取公共代码
+### import懒加载
+### 热更新
