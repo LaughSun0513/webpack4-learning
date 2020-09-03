@@ -1,0 +1,21 @@
+{
+  "name": "004-webpack-bundle-fast",
+  "version": "1.0.0",
+  "main": "index.js",
+  "license": "MIT",
+  "scripts": {
+    "build": "webpack",
+    "dev": "webpack-dev-server"
+  },
+  "devDependencies": {
+    "@babel/core": "^7.11.5",
+    "@babel/preset-env": "^7.11.5",
+    "babel-loader": "^8.1.0",
+    "html-webpack-plugin": "^4.4.1",
+    "jquery": "^3.5.1",
+    "moment": "^2.27.0",
+    "webpack": "^4.44.1",
+    "webpack-cli": "3.3.0",
+    "webpack-dev-server": "^3.11.0"
+  }
+}

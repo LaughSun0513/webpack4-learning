@@ -55,6 +55,11 @@
   - [resolve.mainFields 寻找package.json字段](#resolve.mainFields)
   - [resolve.extensions 寻找文件类型](#resolve.extensions)
 
+- [webpack的优化](#优化webpack)
+    - [module.noParse 不解析依赖库](#module.noParse)
+    - [module.rules.exclude / module.rules.include 排除路径/指定路径](#module.rules.exclude)
+    - [webpack.ignorePlugin 忽略打包 手动引入小包](#webpack.ignorePlugin)
+    - [webpack.dllPlugin && webpack.DllReferencePlugin 本地缓存](#webpack.dllPlugin)
 
 ## webpack安装
  yarn add  webpack webpack-cli -D
@@ -853,10 +858,196 @@ import 'extensions';
 ## 优化webpack
 ### module.noParse 
 - 不解析某个库里的依赖库 如不去解析jquery里的依赖库
-### module.rules.exclude / module.rules.include
+```js
+{
+    module: {
+    noParse: /jquery/,
+    rules: [
+        {
+            test:/\.js$/,
+            use: {
+                loader: 'babel-loader',
+                options: {
+                    presets: ['@babel/preset-env'],
+                }
+            }
+        }
+    ]
+    }
+}
+```
+```js
+// 不加noParse 打包时间 1987ms
+
+Hash: 6ddd4cd616b38eba22eb
+Version: webpack 4.44.1
+Time: 1987ms
+Built at: 2020-09-03 20:06:14
+    Asset     Size  Chunks             Chunk Names
+bundle.js  326 KiB    main  [emitted]  main
+Entrypoint main = bundle.js
+[./node_modules/webpack/buildin/module.js] (webpack)/buildin/module.js 552 bytes {main} [built]
+[./src/index.js] 49 bytes {main} [built]
+    + 1 hidden module
+```
+```js
+// 加noParse 打包时间 Time: 1553ms  1987ms --> 1553ms 
+
+Hash: 3aedbfbbbf88f20207b9
+Version: webpack 4.44.1
+Time: 1553ms
+Built at: 2020-09-03 20:07:03
+    Asset     Size  Chunks             Chunk Names
+bundle.js  325 KiB    main  [emitted]  main
+Entrypoint main = bundle.js
+[./src/index.js] 49 bytes {main} [built]
+    + 1 hidden module
+```
+
+### module.rules.exclude 
+### module.rules.include
+```js
+module: {
+    rules: [
+        {
+            test:/\.js$/,
+            use: {
+                loader: 'babel-loader',
+                options: {
+                    presets: ['@babel/preset-env'],
+                }
+            },
+            include: path.join(__dirname,'src'), // 处理src里的文件
+            exclude: /node_modules/ // 排除node_modules
+        }
+    ]
+}
+```
+```js
+// 不加 exclude + include Time: 1737ms
+Hash: 6ddd4cd616b38eba22eb
+Version: webpack 4.44.1
+Time: 1737ms
+Built at: 2020-09-03 20:09:40
+    Asset     Size  Chunks             Chunk Names
+bundle.js  326 KiB    main  [emitted]  main
+Entrypoint main = bundle.js
+[./node_modules/webpack/buildin/module.js] (webpack)/buildin/module.js 552 bytes {main} [built]
+[./src/index.js] 49 bytes {main} [built]
+    + 1 hidden module
+```
+```js
+// exclude + include Time: 622ms  1737ms --> 622ms
+Hash: f1092cade292dc491507
+Version: webpack 4.44.1
+Time: 622ms
+Built at: 2020-09-03 20:08:18
+    Asset     Size  Chunks             Chunk Names
+bundle.js  322 KiB    main  [emitted]  main
+Entrypoint main = bundle.js
+[./src/index.js] 49 bytes {main} [built]
+    + 1 hidden module
+```
+
 ### webpack.ignorePlugin 
 - ignore大包 + 手动引入小包 如引入moment时，不解析语言包 手动引入moment/locale/zh-cn
-### dllPlugin
+```js
+import moment from 'moment';
+moment.locale('zh-CN'); // moment里的语言包 分为很多种 我们只需要中文包
+
+console.log(moment().startOf('day').fromNow());
+```
+```js
+// 将语言包全部打包 需要 Time: 3072ms
+
+    Hash: 5b8876f0f09bc3c6aafa
+    Version: webpack 4.44.1
+    Time: 3072ms
+    Built at: 2020-09-03 20:16:06
+        Asset       Size  Chunks             Chunk Names
+    bundle.js    764 KiB    main  [emitted]  main
+    index.html  238 bytes          [emitted]  
+```
+
+```js
+const webpack = require('webpack');
+
+plugins: [
+    new webpack.IgnorePlugin(/\.\/locale/,/moment/), // 去掉moment所有的语言包
+]
+
+// index.js
+import moment from 'moment';
+import 'moment/locale/zh-cn'; //手动引入中文小包
+
+moment.locale('zh-CN');
+console.log(moment().startOf('day').fromNow());
+```
+```js
+    // 去大包 手动引入小包 Time: 1572ms   Time: 3072ms --> 1572ms
+    Hash: 0c09bed3746bcf22f7cb
+    Version: webpack 4.44.1
+    Time: 1572ms
+    Built at: 2020-09-03 20:21:42
+        Asset       Size  Chunks             Chunk Names
+    bundle.js    159 KiB    main  [emitted]  main
+    index.html  238 bytes          [emitted]  
+    Entrypoint main = bundle.js
+```
+
+
+### webpack.dllPlugin
+```js
+// 先把 react react-dom缓存到本地 再打包别的
+import React from 'react';
+import { render } from 'react-dom';
+
+render(
+    <div>JSX</div>,
+    document.getElementById('app')
+); 
+```
+```js
+// 1.webpack.config.react.js
+
+const path = require('path');
+const webpack = require('webpack');
+
+module.exports = {
+    mode: 'development',
+    entry: {
+        react: ['react','react-dom'] // 目标库
+    },
+    output: {
+        filename: '_dll_[name].js', // 生成的名字
+        path: path.resolve(__dirname, 'build'),
+        library: '_dll_[name]', // _dll_react 
+        // libraryTarget: 'var'
+    },
+    plugins: [
+        // 利用webpack.DllPlugin
+        new webpack.DllPlugin({
+            name: '_dll_[name]', // name == library
+            path: path.resolve(__dirname, 'build', 'manifest.json')
+        })
+    ]
+}
+
+// 2. npx webpack --config webpack.config.react.js
+// 打包react和react-dom到本地 生成 manifest.json + _dll_react
+```
+```js
+// 3. 使用manifest.json + _dll_react
+// index.html
+<script src="/_dll_react.js"></script>
+```
+```js
+// 4. 正常打包的时候先去manifest.json找  webpack.config.js
+new webpack.DllReferencePlugin({
+    manifest: path.resolve(__dirname, 'build','manifest.json')
+})
+```
+
 ### happyPack
 ### webpack自带tree-shaking / scope hosting
 - production模式 自带tree-shaking 会将没用的代码删掉，不打包进bundle.js
