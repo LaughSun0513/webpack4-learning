@@ -23,7 +23,7 @@
     - [clean-webpack-plugin 打包的时候每次清一下打包目录](#clean-webpack-plugin)
     - [copy-webpack-plugin 复制文件夹到打包文件里](#copy-webpack-plugin)
     - [webpack.BannerPlugin 在打包出来的js前面添加一段话](#webpack.BannerPlugin)
-    - [webpack.DefinePlugin 在打包出来的js前面添加一段话](#webpack.DefinePlugin)
+    - [webpack.DefinePlugin 往源代码里面注入变量](#webpack.DefinePlugin)
     - [webpack-merge 区分打包环境](#区分打包环境)
 - [loader](#module--放loader)
     - [处理样式的loader](#module--放loader)
