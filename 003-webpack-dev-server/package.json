@@ -16,7 +16,7 @@
     "build": "npx webpack",
     "dev": "webpack-dev-server",
     "server": "nodemon server.js",
-    "ssr":"nodemon webpackInServer.js"
+    "ssr": "nodemon webpackInServer.js"
   },
   "keywords": [],
   "author": "",

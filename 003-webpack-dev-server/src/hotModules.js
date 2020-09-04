@@ -1,0 +1,1 @@
+export const str = '1111更新我之后看看HotModuleReplacementPlugin和NamedModulesPlugin有没有生效~~~'

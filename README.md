@@ -11,6 +11,7 @@
     - [接口转发功能 比如前端请求/api/user-->请求后端真实接口/user](#接口转发功能)
     - [本地mock数据](#本地mock数据)
     - [服务端使用webpack](#服务端使用webpack)
+    - [热更新 浏览器不会刷新 增量更新](#热更新)
 - [output输出文件可以添加hash值](#output输出文件可以添加hash值)
 
 - [插件](#插件)
@@ -60,6 +61,10 @@
     - [module.rules.exclude / module.rules.include 排除路径/指定路径](#module.rules.exclude)
     - [webpack.ignorePlugin 忽略打包 手动引入小包](#webpack.ignorePlugin)
     - [webpack.dllPlugin && webpack.DllReferencePlugin 本地缓存](#webpack.dllPlugin)
+    - [webpack的production模式自带tree-shaking](#webpack的production模式自带tree-shaking)
+    - [optimization.splitChunks.cacheGroups提取公共代码](#optimization.splitChunks.cacheGroups提取公共代码)
+        - [抽离公共引入的包或者代码](#抽离公共代码)
+        - [抽离第三方包](#抽离第三方包)
 
 ## webpack安装
  yarn add  webpack webpack-cli -D
@@ -504,6 +509,10 @@ module:{
 `yarn add mini-css-extract-plugin -D`
 
 ```
+// 两个作用
+// 1. 可以将css单独抽离成一个文件
+// 2. 可以让html自动引入该css
+
 let MiniCssExtractPlugin = require('mini-css-extract-plugin')
 
 plugins: [
@@ -1049,9 +1058,183 @@ new webpack.DllReferencePlugin({
 ```
 
 ### happyPack
-### webpack自带tree-shaking / scope hosting
+```js
+// yarn add happypack
+const Happypack = require('happypack');
+
+{
+    module: {
+        rules: [
+            {
+                test: /\.jsx?$/,
+                use: 'Happypack/loader?id=js' // 这里让Happypack接管 并给个id标示
+            },
+            {
+                test: /\.css$/,
+                use:  'Happypack/loader?id=css'
+            }
+        ]
+    },
+    plugins: [
+        new Happypack({
+            id: 'js', // 使用上面的id
+            use: [{  // 原来写在module.rules.use 换到插件内部
+                    loader: 'babel-loader',
+                    options: {
+                        presets: ['@babel/preset-env']
+                    }
+            }]
+        }),
+        new Happypack({
+            id: 'css',
+            use: ['style-loader','css-loader'] // 貌似css被打包到了js中
+        })
+    ]
+}
+```
+```js
+Hash: b1591d1f28e2d994a711
+Version: webpack 4.44.1
+Time: 734ms
+Built at: 2020-09-04 15:09:00
+    Asset      Size  Chunks             Chunk Names
+bundle.js  3.98 KiB    main  [emitted]  main
+Entrypoint main = bundle.js
+[./src/index.js] 21 bytes {main} [built]
+
+// 加了happypack对于简单的打包貌似没有起到作用   Time: 734ms --> Time: 744ms
+// 对于复杂的项目应该会有效果
+Happy[js]: Version: 5.0.1. Threads: 3
+Happy[js]: All set; signaling webpack to proceed.
+Hash: b1591d1f28e2d994a711
+Version: webpack 4.44.1
+Time: 744ms
+Built at: 2020-09-04 15:09:20
+    Asset      Size  Chunks             Chunk Names
+bundle.js  3.98 KiB    main  [emitted]  main
+Entrypoint main = bundle.js
+[./src/index.js] 21 bytes {main} [built]
+```
+
+### webpack的production模式自带tree-shaking
+#### tree-shaking / scope hosting作用域提升
 - production模式 自带tree-shaking 会将没用的代码删掉，不打包进bundle.js
 - scope hosting 会优化代码，将没用啰嗦的变量合并结果
-### optimization.splitChunks 提取公共代码
+
+### optimization.splitChunks.cacheGroups提取公共代码
+#### 抽离公共代码
+```js
+// page1  --> a.js + b.js
+// page2  --> a.js + b.js
+const path = require('path');
+module.exports = {
+    mode: 'development',
+    entry: {
+        page1: './src/page1.js',
+        page2: './src/page2.js'
+    },
+    output: {
+        filename: '[name].js',
+        path: path.resolve(__dirname,'build')
+    },
+    optimization: {
+        splitChunks: {
+            cacheGroups: {
+                common: {
+                    chunks: 'initial',
+                    minSize: 0,
+                    minChunks: 2 // 引入次数超过两次的都打成common包 这里a.js和b.js都被引用了两次
+                }
+            }
+        }
+    }
+}
+```
+```js
+// 打包出的结果
+common~page1~page2.js  134 bytes       0  [emitted]  common~page1~page2 // a.js和b.js被打包在了一起
+             page1.js   1.52 KiB       1  [emitted]  page1
+             page2.js   1.52 KiB       2  [emitted]  page2
+```
+#### 抽离第三方包
+```js
+optimization: {
+    splitChunks: {
+        cacheGroups: {
+            common: { // 抽离代码理的公共代码
+                chunks: 'initial',
+                minSize: 0,
+                minChunks: 2 // 引入次数超过两次的都打成common包 这里a.js和b.js都被引用了两次
+            },
+            vendor: { // 抽离第三方的包
+                priority:1, // 提高打包的权重，否则都会进common的包 所以先抽离vendor第三包 再去抽离common
+                test: /node_modules/,
+                chunks: 'initial',
+                minSize: 0,
+                minChunks: 2
+            }
+        }
+    }
+}
+```
+```js
+common~page1~page2.js  135 bytes       0  [emitted]  common~page1~page2 //  将a.js和b.js引入超过两次的文件打包到一起
+             page1.js   1.56 KiB       2  [emitted]  page1
+             page2.js   1.56 KiB       3  [emitted]  page2
+vendor~page1~page2.js   87.9 KiB       1  [emitted]  vendor~page1~page2 // 将第三方包jquery抽离成一个文件
+```
+
 ### import懒加载
+```js
+const button = document.createElement('button');
+button.innerHTML = '点我加载 lazyLoad.js';
+button.addEventListener('click', () => {
+    // 直接使用import语法加载文件
+    import('./lazyload.js').then(data => { 
+        alert(data.default);
+    })
+});
+document.body.appendChild(button);
+
+// npm run dev 查看
+```
 ### 热更新
+
+- webpack.NamedModulesPlugin // 打印更新的模块路径
+- webpack.HotModuleReplacementPlugin // 热更新插件
+
+```js
+// 查看003-webpack-dev-server
+
+devServer: {
+	hot: true, // 启用热更新
+},
+plugins: [
+    new webpack.NamedModulesPlugin(), // 打印更新的模块路径
+	new webpack.HotModuleReplacementPlugin(), // 热更新插件
+]
+
+// index.js
+if (module.hot) { 
+    module.hot.accept('./hotModules', () => { 
+        console.log('监控hotModules文件的变化')
+        let str = require('./hotModules'); // 重新加载这个文件
+        console.log('更新完之后是增量更新，不刷新浏览器了' + str)
+    })
+}
+// npm run dev
+```
+```
+[HMR] Waiting for update signal from WDS...
+index.js:27 更新我之后看看HotModuleReplacementPlugin和NamedModulesPlugin有没有生效~~~
+index.js:24 hello webpack-dev-server proxy before-hooks to mock data
+client:48 [WDS] Hot Module Replacement enabled.
+client:52 [WDS] Live Reloading enabled.
+
+// 浏览器不会刷新 增量更新
+监控hotModules文件的变化
+index.js:34 更新完之后是增量更新，不刷新浏览器了{"str":"1111更新我之后看看HotModuleReplacementPlugin和NamedModulesPlugin有没有生效~~~"}
+log.js:24 [HMR] Updated modules:
+log.js:24 [HMR]  - ./src/hotModules.js
+log.js:24 [HMR] App is up to date.
+```
