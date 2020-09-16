@@ -1,0 +1,16 @@
+{
+  "dependencies": {
+    "tapable": "^1.1.3"
+  },
+  "name": "009-webpack-tapable",
+  "version": "1.0.0",
+  "main": "index.js",
+  "devDependencies": {},
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "description": ""
+}

@@ -865,7 +865,7 @@ import 'extensions';
 - webpack.prod.js   上线打包配置
 
 ## 优化webpack
-### module.noParse 
+### module.noParse
 - 不解析某个库里的依赖库 如不去解析jquery里的依赖库
 ```js
 {
@@ -900,7 +900,7 @@ Entrypoint main = bundle.js
     + 1 hidden module
 ```
 ```js
-// 加noParse 打包时间 Time: 1553ms  1987ms --> 1553ms 
+// 加noParse 打包时间 Time: 1553ms  1987ms --> 1553ms
 
 Hash: 3aedbfbbbf88f20207b9
 Version: webpack 4.44.1
@@ -913,7 +913,7 @@ Entrypoint main = bundle.js
     + 1 hidden module
 ```
 
-### module.rules.exclude 
+### module.rules.exclude
 ### module.rules.include
 ```js
 module: {
@@ -958,7 +958,7 @@ Entrypoint main = bundle.js
     + 1 hidden module
 ```
 
-### webpack.ignorePlugin 
+### webpack.ignorePlugin
 - ignore大包 + 手动引入小包 如引入moment时，不解析语言包 手动引入moment/locale/zh-cn
 ```js
 import moment from 'moment';
@@ -1014,7 +1014,7 @@ import { render } from 'react-dom';
 render(
     <div>JSX</div>,
     document.getElementById('app')
-); 
+);
 ```
 ```js
 // 1.webpack.config.react.js
@@ -1030,7 +1030,7 @@ module.exports = {
     output: {
         filename: '_dll_[name].js', // 生成的名字
         path: path.resolve(__dirname, 'build'),
-        library: '_dll_[name]', // _dll_react 
+        library: '_dll_[name]', // _dll_react
         // libraryTarget: 'var'
     },
     plugins: [
@@ -1190,7 +1190,7 @@ const button = document.createElement('button');
 button.innerHTML = '点我加载 lazyLoad.js';
 button.addEventListener('click', () => {
     // 直接使用import语法加载文件
-    import('./lazyload.js').then(data => { 
+    import('./lazyload.js').then(data => {
         alert(data.default);
     })
 });
@@ -1215,8 +1215,8 @@ plugins: [
 ]
 
 // index.js
-if (module.hot) { 
-    module.hot.accept('./hotModules', () => { 
+if (module.hot) {
+    module.hot.accept('./hotModules', () => {
         console.log('监控hotModules文件的变化')
         let str = require('./hotModules'); // 重新加载这个文件
         console.log('更新完之后是增量更新，不刷新浏览器了' + str)
@@ -1237,4 +1237,21 @@ index.js:34 更新完之后是增量更新，不刷新浏览器了{"str":"1111�
 log.js:24 [HMR] Updated modules:
 log.js:24 [HMR]  - ./src/hotModules.js
 log.js:24 [HMR] App is up to date.
+```
+
+## Tapable
+webpack本质上是一种事件流的机制，它的工作流程就是将各个插件串联起来，实现的核心就是Tapable，
+类似于Node的events库，核心原理依赖于发布订阅模式
+```js
+const {
+  SyncHook,
+  SyncBailHook,
+  SyncWaterfallHook,
+  SyncLoopHook,
+  AsyncParallelHook,
+  AsyncParallelBailHook,
+  AsyncSeriesHook,
+  AsyncSeriesBailHook,
+  AsyncSeriesWaterfallHook
+} = require('tapable')
 ```
