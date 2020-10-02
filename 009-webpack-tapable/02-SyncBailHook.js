@@ -1,4 +1,4 @@
-// 同步钩子 -- SyncBailHook
+// 同步钩子 -- SyncBailHook 执行到某个Task只要返回非undefined类型的值就停止执行，不继续下去
 class SyncBailHook {
 	constructor(args) {
 		this.tasks = []; // 发布订阅模式

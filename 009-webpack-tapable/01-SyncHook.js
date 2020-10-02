@@ -1,4 +1,4 @@
-// 同步钩子 -- SyncHook
+// 同步钩子 -- SyncHook 一个个执行
 class SyncHook {
 	constructor(args) {
 		this.tasks = []; // 发布订阅模式
